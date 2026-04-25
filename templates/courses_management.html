@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-book me-2"></i>Управление курсами</h2>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+        <i class="bi bi-plus-circle"></i> Добавить курс
+    </button>
+</div>
+
+<div class="row">
+    {% for course in courses %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 {% if not course.is_active %}opacity-75{% endif %}">
+            <div class="card-header bg-primary text-white d-flex justify-content-between">
+                <span>{{ course.category or 'Без категории' }}</span>
+                <span>
+                    {% if course.is_active %}
+                        <span class="badge bg-success">Активен</span>
+                    {% else %}
+                        <span class="badge bg-secondary">В архиве</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ course.title }}</h5>
+                <p class="card-text text-muted small">
+                    {{ course.description or 'Нет описания' }}
+                </p>
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <small class="text-muted">Длительность:</small>
+                        <br><strong>{{ course.duration_hours or '—' }} ч.</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Проходной балл:</small>
+                        <br><strong>{{ course.passing_score }}%</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="btn-group w-100" role="group">
+                    <!-- Кнопка редактирования -->
+                    <button class="btn btn-outline-primary btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editCourseModal"
+                            data-id="{{ course.id }}"
+                            data-title="{{ course.title }}"
+                            data-description="{{ course.description or '' }}"
+                            data-category="{{ course.category or '' }}"
+                            data-duration="{{ course.duration_hours or '' }}"
+                            data-passing="{{ course.passing_score }}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <!-- Кнопка архивации/активации -->
+                    <form method="POST" action="{{ url_for('toggle_course_status', id=course.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-outline-warning btn-sm"
+                                onclick="return confirm('{% if course.is_active %}Архивировать{% else %}Активировать{% endif %} курс?');">
+                            <i class="bi bi-{% if course.is_active %}archive{% else %}arrow-repeat{% endif %}"></i>
+                        </button>
+                    </form>
+                    <!-- Кнопка удаления -->
+                    <form method="POST" action="{{ url_for('delete_course', id=course.id) }}" style="display: inline;">
+                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Удалить курс навсегда?');">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info text-center">Нет курсов. Добавьте первый!</div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Модальное окно добавления курса -->
+<div class="modal fade" id="addCourseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_course') }}">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Новый курс</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Название <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="title" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Категория</label>
+                            <select class="form-select" name="category">
+                                <option value="">Без категории</option>
+                                <option>Неотложная помощь</option>
+                                <option>Диагностика</option>
+                                <option>Безопасность</option>
+                                <option>Терапия</option>
+                                <option>Хирургия</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Длительность (часов)</label>
+                            <input type="number" class="form-control" name="duration_hours" min="1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Проходной балл (%)</label>
+                            <input type="number" class="form-control" name="passing_score"
+                                   min="0" max="100" value="70" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-success">Создать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования курса -->
+<div class="modal fade" id="editCourseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="" id="editCourseForm">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Редактировать курс</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Название <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="title" id="editTitle" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Категория</label>
+                            <select class="form-select" name="category" id="editCategory">
+                                <option value="">Без категории</option>
+                                <option>Неотложная помощь</option>
+                                <option>Диагностика</option>
+                                <option>Безопасность</option>
+                                <option>Терапия</option>
+                                <option>Хирургия</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание</label>
+                        <textarea class="form-control" name="description" id="editDescription" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Длительность (часов)</label>
+                            <input type="number" class="form-control" name="duration_hours" id="editDuration" min="1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Проходной балл (%)</label>
+                            <input type="number" class="form-control" name="passing_score"
+                                   id="editPassingScore" min="0" max="100" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-warning">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editModal = document.getElementById('editCourseModal');
+    if (editModal) {
+        editModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const title = button.getAttribute('data-title');
+            const description = button.getAttribute('data-description');
+            const category = button.getAttribute('data-category');
+            const duration = button.getAttribute('data-duration');
+            const passing = button.getAttribute('data-passing');
+
+            const form = document.getElementById('editCourseForm');
+            form.action = '/edit_course/' + id;
+
+            document.getElementById('editTitle').value = title;
+            document.getElementById('editDescription').value = description;
+            document.getElementById('editCategory').value = category;
+            document.getElementById('editDuration').value = duration;
+            document.getElementById('editPassingScore').value = passing;
+        });
+    }
+});
+</script>
+{% endblock %}

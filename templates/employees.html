@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-person-badge me-2"></i>Сотрудники</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+        <i class="bi bi-plus-circle"></i> Добавить
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Статус</th>
+                        <th>ФИО</th>
+                        <th>Должность</th>
+                        <th>Отделение</th>
+                        <th>Email</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr class="{% if not emp.is_active %}table-secondary{% endif %}">
+                        <td>
+                            {% if emp.is_active %}
+                                <span class="badge bg-success">Работает</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Уволен</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ emp.name }}</td>
+                        <td>{{ emp.position }}</td>
+                        <td>{{ emp.department }}</td>
+                        <td>{{ emp.email or '—' }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editEmployeeModal"
+                                        data-id="{{ emp.id }}"
+                                        data-name="{{ emp.name }}"
+                                        data-position="{{ emp.position }}"
+                                        data-department="{{ emp.department or '' }}"
+                                        data-email="{{ emp.email or '' }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form method="POST" action="{{ url_for('toggle_employee_status', id=emp.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-outline-warning"
+                                            onclick="return confirm('{% if emp.is_active %}Уволить{% else %}Восстановить{% endif %} сотрудника?');">
+                                        <i class="bi bi-{% if emp.is_active %}person-dash{% else %}person-plus{% endif %}"></i>
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('delete_employee', id=emp.id) }}"
+                                      style="display: inline;"
+                                      onsubmit="return confirm('Удалить сотрудника навсегда? Все его тренинги тоже будут удалены!');">
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Нет сотрудников. Добавьте первого!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно добавления сотрудника -->
+<div class="modal fade" id="addEmployeeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_employee') }}">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-plus me-2"></i>Новый сотрудник
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">ФИО <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" required placeholder="Иванов Иван Иванович">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Должность <span class="text-danger">*</span></label>
+                        <select class="form-select" name="position" required>
+                            <option value="">Выберите должность</option>
+                            <option>Врач</option>
+                            <option>Врач-специалист</option>
+                            <option>Заведующий отделением</option>
+                            <option>Медсестра</option>
+                            <option>Старшая медсестра</option>
+                            <option>Лаборант</option>
+                            <option>Администратор</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Отделение</label>
+                        <select class="form-select" name="department">
+                            <option value="">Выберите отделение</option>
+                            <option>Терапия</option>
+                            <option>Хирургия</option>
+                            <option>Кардиология</option>
+                            <option>Лучевая диагностика</option>
+                            <option>Реанимация</option>
+                            <option>Педиатрия</option>
+                            <option>Неврология</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email" placeholder="name@medtrainingpro.ru">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg"></i> Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования сотрудника -->
+<div class="modal fade" id="editEmployeeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="" id="editEmployeeForm">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square me-2"></i>Редактировать сотрудника
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">ФИО <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" id="editName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Должность <span class="text-danger">*</span></label>
+                        <select class="form-select" name="position" id="editPosition" required>
+                            <option value="">Выберите должность</option>
+                            <option>Врач</option>
+                            <option>Врач-специалист</option>
+                            <option>Заведующий отделением</option>
+                            <option>Медсестра</option>
+                            <option>Старшая медсестра</option>
+                            <option>Лаборант</option>
+                            <option>Администратор</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Отделение</label>
+                        <select class="form-select" name="department" id="editDepartment">
+                            <option value="">Выберите отделение</option>
+                            <option>Терапия</option>
+                            <option>Хирургия</option>
+                            <option>Кардиология</option>
+                            <option>Лучевая диагностика</option>
+                            <option>Реанимация</option>
+                            <option>Педиатрия</option>
+                            <option>Неврология</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email" id="editEmail">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-save"></i> Сохранить изменения
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработчик для модального окна редактирования
+    const editModal = document.getElementById('editEmployeeModal');
+    if (editModal) {
+        editModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+
+            // Получаем данные из атрибутов кнопки
+            const id = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name');
+            const position = button.getAttribute('data-position');
+            const department = button.getAttribute('data-department');
+            const email = button.getAttribute('data-email');
+
+            // Устанавливаем action для формы
+            const form = document.getElementById('editEmployeeForm');
+            form.action = '/edit_employee/' + id;
+
+            // Заполняем поля формы
+            document.getElementById('editName').value = name;
+            document.getElementById('editPosition').value = position;
+            document.getElementById('editDepartment').value = department;
+            document.getElementById('editEmail').value = email;
+        });
+    }
+});
+</script>
+{% endblock %}

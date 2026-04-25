@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Дашборд</h2>
+
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-people-fill fs-1 text-primary"></i>
+                <h5 class="mt-2">Сотрудники</h5>
+                <h2>{{ emp_count }}</h2>
+                <small class="text-muted">активных</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-book-fill fs-1 text-success"></i>
+                <h5 class="mt-2">Курсы</h5>
+                <h2>{{ course_count }}</h2>
+                <small class="text-muted">активных</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-journal-check fs-1 text-info"></i>
+                <h5 class="mt-2">Тренинги</h5>
+                <h2>{{ training_count }}</h2>
+                <small class="text-muted">всего</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-trophy-fill fs-1 text-warning"></i>
+                <h5 class="mt-2">Средний балл</h5>
+                <h2>{{ avg_score }}%</h2>
+                <small class="text-muted">по всем тренингам</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>О системе</h5>
+            </div>
+            <div class="card-body">
+                <p>Добро пожаловать в корпоративную систему управления медицинским образованием "МедТренингПро".</p>
+                <p>Здесь вы можете:</p>
+                <ul>
+                    <li>Вести учет сотрудников</li>
+                    <li>Управлять учебными курсами</li>
+                    <li>Регистрировать результаты тренингов</li>
+                    <li>Анализировать успеваемость</li>
+                </ul>
+                <a href="{{ url_for('employees') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Добавить сотрудника
+                </a>
+                <a href="{{ url_for('courses') }}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Добавить курс
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Быстрые действия</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{{ url_for('trainings') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-pencil-square text-success me-2"></i>
+                        Записать результат тренинга
+                    </a>
+                    <a href="{{ url_for('analytics') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-bar-chart text-info me-2"></i>
+                        Посмотреть аналитику
+                    </a>
+                    <a href="{{ url_for('employees') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-person-plus text-primary me-2"></i>
+                        Управление сотрудниками
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

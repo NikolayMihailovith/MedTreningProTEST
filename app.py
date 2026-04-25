@@ -347,9 +347,58 @@ def init_db():
 #     app.run(host='0.0.0.0', port=port)
 
 # Создаём таблицы при любом запуске (и локально, и на Render)
+# --- Инициализация базы данных и тестовых данных ---
 with app.app_context():
+    # 1. Создаём таблицы (если их нет)
     db.create_all()
 
+    # 2. Добавляем тестовые данные, если база пустая
+    if Course.query.count() == 0:
+        courses = [
+            Course(title="Базовая СЛР (BLS)",
+                   description="Базовые навыки сердечно-легочной реанимации",
+                   category="Неотложная помощь", duration_hours=8, passing_score=70),
+            Course(title="Радиационная безопасность",
+                   description="Правила работы с источниками ионизирующего излучения",
+                   category="Безопасность", duration_hours=4, passing_score=80),
+            Course(title="ЭКГ диагностика",
+                   description="Основы интерпретации электрокардиограмм",
+                   category="Диагностика", duration_hours=12, passing_score=70),
+            Course(title="Инфекционная безопасность",
+                   description="Профилактика внутрибольничных инфекций",
+                   category="Безопасность", duration_hours=6, passing_score=75),
+        ]
+        db.session.add_all(courses)
+        db.session.commit()
+
+    if Employee.query.count() == 0:
+        employees = [
+            Employee(name="Иван Петров", position="Врач-рентгенолог",
+                     department="Лучевая диагностика", email="i.petrov@mtp.ru", is_active=True),
+            Employee(name="Анна Сидорова", position="Медсестра",
+                     department="Хирургия", email="a.sidorova@mtp.ru", is_active=True),
+            Employee(name="Петр Иванов", position="Врач",
+                     department="Кардиология", email="p.ivanov@mtp.ru", is_active=True),
+            Employee(name="Мария Козлова", position="Старшая медсестра",
+                     department="Терапия", email="m.kozlova@mtp.ru", is_active=True),
+        ]
+        db.session.add_all(employees)
+        db.session.commit()
+
+    if Training.query.count() == 0:
+        trainings = [
+            Training(title="Базовая СЛР (BLS)", course_id=1, employee_id=1, score=85, status='completed'),
+            Training(title="Радиационная безопасность", course_id=2, employee_id=1, score=95, status='completed'),
+            Training(title="Базовая СЛР (BLS)", course_id=1, employee_id=2, score=65, status='failed'),
+            Training(title="ЭКГ диагностика", course_id=3, employee_id=3, score=90, status='completed'),
+            Training(title="Инфекционная безопасность", course_id=4, employee_id=4, score=78, status='completed'),
+            Training(title="Базовая СЛР (BLS)", course_id=1, employee_id=4, score=92, status='completed'),
+        ]
+        db.session.add_all(trainings)
+        db.session.commit()
+
+
+# --- Запуск (локальный) ---
 if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
